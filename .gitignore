@@ -260,4 +260,7 @@ Thumbs.db
 __marimo__/
 
 # Streamlit
+<<<<<<< HEAD
 .streamlit/secrets.toml
+=======
+

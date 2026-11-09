@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dynamic GNN-Based Runtime Jailbreak Detection
 
 Project Overview
@@ -40,3 +41,5 @@ Repository Structure
 
 Development Status
 Initial project structure created.
+=======
+
