@@ -214,6 +214,49 @@ tempCodeRunnerFile.py
 # Marimo
 marimo/_static/
 marimo/_lsp/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Allow the example configuration
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model weights and large generated files
+*.pt
+*.pth
+*.ckpt
+
+# Generated data
+data/raw/*
+data/processed/*
+data/splits/*
+
+# Keep folder documentation
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/splits/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# Operating system
+.DS_Store
+Thumbs.db
 __marimo__/
 
 # Streamlit
