@@ -1,0 +1,17 @@
+numpy
+pandas
+scikit-learn
+torch
+torch-geometric
+sentence-transformers
+networkx
+fastapi
+uvicorn
+pydantic
+matplotlib
+seaborn
+pytest
+python-dotenv
+pyyaml
+jupyter
+ipykernel
