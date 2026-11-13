@@ -165,9 +165,9 @@ Rule: `session_label` is MALICIOUS if any action in the session is MALICIOUS or 
 - `trust_level` comes from the channel, not from the wording of the text, and has two allowed values: `trusted` and `untrusted`.
 - `user_message`, `retrieved_context` and `tool_result` events are `untrusted`. Trust here means instruction authority.
 - `policy_decision` events from the trusted policy channel are `trusted`.
-- `assistant_message` and `proposed_action`: the dataset follows the convention in the graph fixture (`assistant_message` trusted, `proposed_action` untrusted) until Members 2 and 3 confirm. **Open item.**
+- Trust convention confirmed with Member 3: `assistant_message` is `trusted`; `proposed_action` is `untrusted`.
 - Trust does not propagate between events. Provenance is carried by explicit edges and metadata.
-- If a source is unknown, record `source_type = "unknown"` and `trust_level = "untrusted"`. Do not invent provenance. **Open item: confirm with Member 2.**
+- If a source is unknown, set `source_type = "unknown"` and `trust_level = "untrusted"`. Do not invent provenance.
 
 ## 12. Quality process
 
