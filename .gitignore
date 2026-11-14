@@ -250,6 +250,10 @@ data/splits/*
 !data/processed/.gitkeep
 !data/splits/.gitkeep
 
+# Small synthetic pilot sample
+!data/raw/pilot_events.jsonl
+!data/raw/pilot_manifest.jsonl
+
 # IDE
 .vscode/
 .idea/
