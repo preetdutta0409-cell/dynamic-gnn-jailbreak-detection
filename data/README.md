@@ -1,37 +1,28 @@
-# Pilot dataset
+# Synthetic pilot dataset
 
-Version: 0.2 draft
+Version: 0.3 draft
 
-This is a small, synthetic smoke-test fixture for Member 1's dataset and evaluation work. It is not a training or benchmark dataset.
+The current synthetic dataset contains 500 sessions, 5,530 canonical events, 50 scenario families, and 1,000 labeled proposed actions. It meets the generation guide's recommended lower bounds for size. It is not training-ready until independent label review is complete.
 
 ## Files
 
-- raw/pilot_events.jsonl: one canonical event record per line.
-- raw/pilot_manifest.jsonl: one label record per session; action labels refer to proposed_action event IDs.
-- ../docs/dataset_documentation.md: scope, counts, review state, limitations, and generation-guide comparison.
+- raw/pilot_events.jsonl: canonical event records, one per line.
+- raw/pilot_manifest.jsonl: session and action labels, one manifest record per session.
+- splits/scenario_splits.json: deterministic split assignments grouped by scenario_id.
+- ../docs/dataset_statistics.md: counts, distributions, review state, generation method, and split sizes.
 
-## Format and labeling
+## Format and review
 
-Events retain the ten canonical top-level fields. The scenario ID is repeated as metadata.scenario_id for grouped split preparation and must match the authoritative scenario_id in the session manifest. This keeps the Phase 1 top-level schema unchanged; confirm the metadata convention with the ingestion and graph owners.
+Events retain exactly ten canonical top-level fields. Each event repeats its scenario ID under metadata.scenario_id; the manifest remains authoritative. Labels stay in the manifest and join to proposed_action events by event_id.
 
-The primary target is action_label on proposed_action events. SAFE maps to 0 and MALICIOUS maps to 1 only after independent review. AMBIGUOUS is excluded from binary training and metrics until adjudicated. Labels remain in the manifest, never in graph events.
-
-## Provenance and permitted use
-
-All examples are synthetic, use fictional identifiers and example.test addresses, and describe mock actions only. No real email, database, personal data, credentials, or external dataset is included.
-
-## Review and limitations
-
-The pilot contains 10 sessions, 39 events, 10 proposed actions, and 10 scenarios. The generation guide's acceptable-pilot minimums are 300 sessions, 3,000 events, 600 actions, and 30 scenarios. The current pilot is below each threshold. No labels are independently reviewed and no evaluation split is published.
-
-Keep every scenario group within one split. Expand the dataset, obtain independent label review, and publish a quality report before training or making performance claims.
+Counts: 524 SAFE, 456 MALICIOUS, and 20 AMBIGUOUS actions. SAFE/MALICIOUS labels are UNREVIEWED. AMBIGUOUS labels require adjudication. Only independently reviewed SAFE or MALICIOUS actions are eligible for binary training.
 
 ## Utility commands
 
-From the repository root:
+Run from the repository root:
 
 - Validate: python -m src.data.dataset_loader --events data/raw/pilot_events.jsonl --manifest data/raw/pilot_manifest.jsonl
-- Require independent binary-label review: add --require-reviewed; this draft should be rejected because no binary action labels have independent review.
-- Create future scenario-grouped splits: python -m src.data.split_dataset --manifest data/raw/pilot_manifest.jsonl --output data/splits/split_manifest.json --seed 42
+- Require reviewed binary labels: add --require-reviewed. It should reject the current draft until independent review is recorded.
+- Recreate scenario-grouped split assignments: python -m src.data.split_dataset --manifest data/raw/pilot_manifest.jsonl --output data/splits/scenario_splits.json --seed 42
 
-Do not create or use evaluation splits until the dataset has enough reviewed scenarios; the split command is provided for a sufficiently large future dataset.
+All examples are synthetic. Tools and side effects are simulated, and the data contains no real secrets or private user data. See docs/dataset_documentation.md and docs/dataset_statistics.md for details.
