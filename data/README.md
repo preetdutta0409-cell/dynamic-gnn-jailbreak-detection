@@ -1,30 +1,37 @@
 # Pilot dataset
 
-Version: 0.1 draft
+Version: 0.2 draft
 
-This directory contains a small, synthetic pilot for Member 1's dataset and evaluation work. It is a format and labeling pilot, not a final training or benchmark dataset.
+This is a small, synthetic smoke-test fixture for Member 1's dataset and evaluation work. It is not a training or benchmark dataset.
 
 ## Files
 
-- raw/pilot_events.jsonl: one event record per line.
-- raw/pilot_manifest.jsonl: one manifest record per session; action labels refer to the event_id of a proposed_action event.
+- raw/pilot_events.jsonl: one canonical event record per line.
+- raw/pilot_manifest.jsonl: one label record per session; action labels refer to proposed_action event IDs.
+- ../docs/dataset_documentation.md: scope, counts, review state, limitations, and generation-guide comparison.
 
 ## Format and labeling
 
-Events follow the ten top-level fields in labeling guide v0.3: event_id, session_id, timestamp, event_type, source_type, source_id, content, parent_event_id, trust_level, and metadata. Event IDs are globally unique. Timestamps use UTC ISO 8601 with Z. Labels are stored only in the manifest. Member 2 still needs to confirm ingestion adoption and field compatibility.
+Events retain the ten canonical top-level fields. The scenario ID is repeated as metadata.scenario_id for grouped split preparation and must match the authoritative scenario_id in the session manifest. This keeps the Phase 1 top-level schema unchanged; confirm the metadata convention with the ingestion and graph owners.
 
-The primary target is action_label on proposed_action events. SAFE maps to 0 and MALICIOUS maps to 1 for binary metrics; AMBIGUOUS is excluded from primary binary metrics and requires adjudication. Sessions without proposed actions have no action labels.
-
-Edge-related fields are included where applicable: assistant messages that use retrieved context include metadata.retrieved_context_event_ids; proposed actions include metadata.requested_by_event_id naming the requesting assistant message. No proposed_action-to-tool edge is represented.
+The primary target is action_label on proposed_action events. SAFE maps to 0 and MALICIOUS maps to 1 only after independent review. AMBIGUOUS is excluded from binary training and metrics until adjudicated. Labels remain in the manifest, never in graph events.
 
 ## Provenance and permitted use
 
-All examples are manually authored synthetic scenarios. They use fictional identifiers, example.test addresses, and simulated tools only. No external dataset, real personal data, credentials, real email, or real database is included. The pilot is original project material; no external dataset license applies.
+All examples are synthetic, use fictional identifiers and example.test addresses, and describe mock actions only. No real email, database, personal data, credentials, or external dataset is included.
 
 ## Review and limitations
 
-All non-ambiguous labels are UNREVIEWED until a teammate independently reviews them. The two ambiguous cases are marked NEEDS_ADJUDICATION. Do not use them in primary binary metrics unless they are resolved and relabeled.
+The pilot contains 10 sessions, 39 events, 10 proposed actions, and 10 scenarios. The generation guide's acceptable-pilot minimums are 300 sessions, 3,000 events, 600 actions, and 30 scenarios. The current pilot is below each threshold. No labels are independently reviewed and no evaluation split is published.
 
-The sample is intentionally small and synthetic. It cannot support performance claims or establish generalization. It has no train/validation/test split yet. When the dataset grows, split by scenario_id or another agreed template group, never by event row, and report session/action counts and class balance.
+Keep every scenario group within one split. Expand the dataset, obtain independent label review, and publish a quality report before training or making performance claims.
 
-The JSONL layout and metadata details should be checked with Member 2 (ingestion) and Member 4 (prediction/evaluation) before the pilot becomes a larger dataset.
+## Utility commands
+
+From the repository root:
+
+- Validate: python -m src.data.dataset_loader --events data/raw/pilot_events.jsonl --manifest data/raw/pilot_manifest.jsonl
+- Require independent binary-label review: add --require-reviewed; this draft should be rejected because no binary action labels have independent review.
+- Create future scenario-grouped splits: python -m src.data.split_dataset --manifest data/raw/pilot_manifest.jsonl --output data/splits/split_manifest.json --seed 42
+
+Do not create or use evaluation splits until the dataset has enough reviewed scenarios; the split command is provided for a sufficiently large future dataset.
