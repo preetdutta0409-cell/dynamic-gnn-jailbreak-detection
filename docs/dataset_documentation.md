@@ -1,38 +1,46 @@
-# Pilot dataset documentation
+# Dataset documentation
 
 ## Version and scope
 
-Dataset version: 0.1 draft. This document describes the synthetic pilot in data/raw/pilot_events.jsonl and data/raw/pilot_manifest.jsonl.
+Dataset version: 0.3 draft. This synthetic dataset is prepared for pilot training and evaluation after independent label review. It includes 500 sessions, 5,530 events, 50 scenario families, and 1,000 proposed-action labels.
 
 ## Composition
 
-| Session label | Sessions | Proposed actions |
-|---|---:|---:|
-| SAFE | 4 | 1 |
-| MALICIOUS | 4 | 4 |
-| AMBIGUOUS | 2 | 2 |
-| Total | 10 | 7 |
+See [dataset_statistics.md](dataset_statistics.md) for event and trust distributions, attack-category counts, review state, and scenario-grouped split sizes.
 
-Safe cases cover ordinary question answering, educational discussion, quoted attack text, and a legitimate mock email. Malicious cases cover indirect prompt injection, multi-turn manipulation, tool-result injection, and forged policy authority. Ambiguous cases cover overlapping instructions and unclear query scope.
+| Action label | Count |
+|---|---:|
+| SAFE | 524 |
+| MALICIOUS | 456 |
+| AMBIGUOUS | 20 |
+| Total | 1,000 |
 
-Primary action metrics currently have five non-ambiguous proposed-action examples: one SAFE and four MALICIOUS. This is far too small for model evaluation; the counts are only a pilot-format check.
+The binary draft class balance is 53.5% SAFE and 46.5% MALICIOUS. All 980 binary labels remain UNREVIEWED; the 20 AMBIGUOUS labels require adjudication. Do not train or report model performance until review is complete.
 
-## Provenance and generation
+## Action counts by split
 
-All content is synthetic and manually authored for this project. No external dataset or source text is used. Identifiers are fictional, addresses use example.test, and all actions are simulated. There are no real external side effects.
+| Split | SAFE | MALICIOUS | AMBIGUOUS | Total |
+|---|---:|---:|---:|---:|
+| Train | 366 | 324 | 10 | 700 |
+| Validation | 94 | 66 | 0 | 160 |
+| Test | 64 | 66 | 10 | 140 |
 
-## Labeling and review
+These are draft label counts; no SAFE or MALICIOUS label has independent review.
 
-Labels follow docs/dataset_labeling_guidelines.md v0.3 on the Member 1 pilot branch. Session and action labels are kept separately in the manifest. Action labels join to proposed_action events by event_id. SAFE and MALICIOUS are the primary binary classes; AMBIGUOUS is excluded until adjudicated.
+## Generation and provenance
 
-All labels remain UNREVIEWED except the two ambiguous cases, which are marked NEEDS_ADJUDICATION. A second teammate should independently review the pilot before it is used for training or evaluation.
+The data is synthetic and generated from 50 authored scenario families with ten session variations per family. Scenarios cover benign tasks, direct and multi-turn jailbreaks, instruction hierarchy manipulation, prompt extraction, role-play, indirect document, web, and tool-output injection, unauthorized access and tool use, exfiltration, privilege escalation, and ambiguous scope. Tool actions are simulated, addresses use example.test, and no real private data or external side effects are included.
+
+Labels are stored only in the separate manifest and join to proposed_action events using event_id. They were assigned from the project rubric but have not received independent teammate review.
+
+## Schema and graph structure
+
+Events retain the ten canonical top-level fields from the Phase 1 graph contract. scenario_id is repeated under metadata.scenario_id to support split grouping and must match the authoritative scenario_id in the manifest. Confirm this metadata convention with the ingestion and graph owners before treating it as a finalized shared contract.
+
+The dataset includes linked user messages, assistant messages, retrieved context, tool calls/results, proposed actions, and pending policy-decision events. Parent and retrieval references stay within their session. All proposed actions have exactly one manifest label.
 
 ## Splits and limitations
 
-No split files are included. Keep any future variants of the same scenario template in one split using scenario_id. Do not make random event-row splits.
+Scenario assignments are in data/splits/scenario_splits.json. The split contains 35 train scenarios, 8 validation scenarios, and 7 test scenarios; sessions from one scenario family never cross splits.
 
-The pilot is small, synthetic, and intentionally narrow. It may not reflect real production traffic, attack prevalence, linguistic diversity, or tool behavior. Do not report model quality or claim generalization from this pilot. Expand and review the dataset before comparative evaluation.
-
-## Contract dependencies
-
-Confirm the JSONL ingestion representation and event field names with Member 2, and confirm prediction/metric handling with Member 4. Update this documentation and version if the contract changes.
+The dataset meets the guide's recommended lower bounds for size, but remains fully synthetic and unreviewed. Complete independent label review and adjudication before model training or evaluation.
