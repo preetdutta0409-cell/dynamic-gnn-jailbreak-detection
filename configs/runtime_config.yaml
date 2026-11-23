@@ -1,0 +1,10 @@
+# PROVISIONAL values. To be tuned on validation data with Anay and Preet.
+policy:
+  allow_below: 0.30
+  block_at: 0.70
+
+# Only these actions can ever reach the mock tools.
+allowed_action_types:
+  - mock_search
+  - mock_database_query
+  - send_mock_email
