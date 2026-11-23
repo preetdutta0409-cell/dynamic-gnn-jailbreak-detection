@@ -40,6 +40,18 @@ Binary draft balance: 524 SAFE / 456 MALICIOUS (53.5% / 46.5%). No binary action
 | trusted | 2580 |
 | untrusted | 2950 |
 
+## Source-type distribution
+
+| Source type | Count |
+|---|---:|
+| assistant | 2580 |
+| document | 290 |
+| policy | 1000 |
+| tool | 160 |
+| user | 1500 |
+
+Source types are non-empty strings in the graph contract, with no closed allowed-value enumeration. The generated values are user, assistant, document, tool, and policy.
+
 ## Attack-category distribution
 
 | Attack category | Count |
@@ -71,6 +83,16 @@ Binary draft balance: 524 SAFE / 456 MALICIOUS (53.5% / 46.5%). No binary action
 | unauthorized_file_access | 10 |
 | unauthorized_modification | 10 |
 | unauthorized_tool_execution | 20 |
+
+## Action-label counts by split
+
+Labels are counted from the manifest after assigning each session by its scenario family. AMBIGUOUS remains separate from binary classes.
+
+| Split | SAFE | MALICIOUS | AMBIGUOUS | Total |
+|---|---:|---:|---:|---:|
+| train | 366 | 324 | 10 | 700 |
+| validation | 94 | 66 | 0 | 160 |
+| test | 64 | 66 | 10 | 140 |
 
 ## Scenario-grouped split plan
 

@@ -33,6 +33,7 @@ ALLOWED_EVENT_TYPES = frozenset(
     }
 )
 ALLOWED_LABELS = frozenset({"SAFE", "MALICIOUS", "AMBIGUOUS"})
+ALLOWED_TRUST_LEVELS = frozenset({"trusted", "untrusted"})
 ALLOWED_REVIEW_STATUSES = frozenset(
     {
         "UNREVIEWED",
@@ -70,6 +71,10 @@ def _non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _is_allowed(value: Any, allowed: frozenset[str]) -> bool:
+    return isinstance(value, str) and value in allowed
+
+
 def _utc_timestamp(value: Any) -> datetime | None:
     if not isinstance(value, str) or not value.endswith("Z"):
         return None
@@ -98,6 +103,7 @@ def validate_dataset(
     issues: list[str] = []
     event_by_id: dict[str, Mapping[str, Any]] = {}
     event_times: dict[str, datetime] = {}
+    last_timestamp_by_session: dict[str, datetime] = {}
     session_ids: set[str] = set()
     action_event_ids: set[str] = set()
 
@@ -134,25 +140,33 @@ def validate_dataset(
         else:
             session_ids.add(session_id)
 
-        if event.get("event_type") not in ALLOWED_EVENT_TYPES:
+        if not _is_allowed(event.get("event_type"), ALLOWED_EVENT_TYPES):
             issues.append(
                 f"{label} event_type is not supported: {event.get('event_type')!r}"
             )
         if not _non_empty_string(event.get("source_type")):
             issues.append(f"{label} source_type must be a non-empty string")
         source_id = event.get("source_id")
-        if source_id is not None and not isinstance(source_id, str):
-            issues.append(f"{label} source_id must be a string or null")
+        if source_id is not None and not _non_empty_string(source_id):
+            issues.append(f"{label} source_id must be a non-empty string or null")
         if not isinstance(event.get("content"), str) or not event.get("content", "").strip():
             issues.append(f"{label} content must be a non-empty string")
-        if event.get("trust_level") not in {"trusted", "untrusted"}:
+        if not _is_allowed(event.get("trust_level"), ALLOWED_TRUST_LEVELS):
             issues.append(f"{label} trust_level must be trusted or untrusted")
 
         timestamp = _utc_timestamp(event.get("timestamp"))
         if timestamp is None:
             issues.append(f"{label} timestamp must be valid UTC ISO 8601 ending in Z")
-        elif _non_empty_string(event_id):
-            event_times[event_id] = timestamp
+        else:
+            if _non_empty_string(event_id):
+                event_times[event_id] = timestamp
+            if _non_empty_string(session_id):
+                previous_timestamp = last_timestamp_by_session.get(session_id)
+                if previous_timestamp is not None and timestamp < previous_timestamp:
+                    issues.append(
+                        f"{label} timestamp is out of chronological order in session {session_id!r}"
+                    )
+                last_timestamp_by_session[session_id] = timestamp
 
         metadata = event.get("metadata")
         if not isinstance(metadata, Mapping):
@@ -194,8 +208,11 @@ def validate_dataset(
             continue
 
         missing = REQUIRED_MANIFEST_KEYS - set(entry)
+        extra = set(entry) - REQUIRED_MANIFEST_KEYS
         if missing:
             issues.append(f"{label} is missing keys: {sorted(missing)}")
+        if extra:
+            issues.append(f"{label} has unsupported keys: {sorted(extra)}")
 
         session_id = entry.get("session_id")
         scenario_id = entry.get("scenario_id")
@@ -208,10 +225,12 @@ def validate_dataset(
 
         if not _non_empty_string(scenario_id):
             issues.append(f"{label} scenario_id must be a non-empty string")
-        if entry.get("session_label") not in ALLOWED_LABELS:
+        if not _non_empty_string(entry.get("attack_type")):
+            issues.append(f"{label} attack_type must be a non-empty string")
+        if not _is_allowed(entry.get("session_label"), ALLOWED_LABELS):
             issues.append(f"{label} has unsupported session_label")
         session_status = entry.get("session_review_status")
-        if session_status not in ALLOWED_REVIEW_STATUSES:
+        if not _is_allowed(session_status, ALLOWED_REVIEW_STATUSES):
             issues.append(f"{label} has unsupported session_review_status")
         if (
             entry.get("session_label") == "AMBIGUOUS"
@@ -233,9 +252,14 @@ def validate_dataset(
                 issues.append(f"{action_label} must be an object")
                 continue
             action_missing = REQUIRED_ACTION_KEYS - set(action)
+            action_extra = set(action) - REQUIRED_ACTION_KEYS
             if action_missing:
                 issues.append(
                     f"{action_label} is missing keys: {sorted(action_missing)}"
+                )
+            if action_extra:
+                issues.append(
+                    f"{action_label} has unsupported keys: {sorted(action_extra)}"
                 )
             event_id = action.get("event_id")
             if not _non_empty_string(event_id):
@@ -246,9 +270,9 @@ def validate_dataset(
                 labelled_action_sessions[event_id] = session_id
             label_value = action.get("action_label")
             review_status = action.get("review_status")
-            if label_value not in ALLOWED_LABELS:
+            if not _is_allowed(label_value, ALLOWED_LABELS):
                 issues.append(f"{action_label} has unsupported action_label")
-            if review_status not in ALLOWED_REVIEW_STATUSES:
+            if not _is_allowed(review_status, ALLOWED_REVIEW_STATUSES):
                 issues.append(f"{action_label} has unsupported review_status")
             if (
                 label_value == "AMBIGUOUS"
@@ -309,7 +333,7 @@ def validate_dataset(
                 f"event {event_id!r} scenario_id does not match its session manifest"
             )
         parent_id = event.get("parent_event_id")
-        if parent_id is not None:
+        if _non_empty_string(parent_id):
             parent = event_by_id.get(parent_id)
             if parent is None:
                 issues.append(f"event {event_id!r} references missing parent {parent_id!r}")
@@ -325,6 +349,8 @@ def validate_dataset(
         retrieved_ids = metadata.get("retrieved_context_event_ids", [])
         if isinstance(retrieved_ids, list):
             for retrieved_id in retrieved_ids:
+                if not _non_empty_string(retrieved_id):
+                    continue
                 context_event = event_by_id.get(retrieved_id)
                 if context_event is None:
                     issues.append(
@@ -342,6 +368,8 @@ def validate_dataset(
         if event.get("event_type") == "proposed_action":
             metadata = event.get("metadata")
             requester_id = metadata.get("requested_by_event_id") if isinstance(metadata, Mapping) else None
+            if not _non_empty_string(requester_id):
+                continue
             requester = event_by_id.get(requester_id)
             if requester is None:
                 issues.append(

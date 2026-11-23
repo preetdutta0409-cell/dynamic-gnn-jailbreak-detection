@@ -17,6 +17,16 @@ See [dataset_statistics.md](dataset_statistics.md) for event and trust distribut
 
 The binary draft class balance is 53.5% SAFE and 46.5% MALICIOUS. All 980 binary labels remain UNREVIEWED; the 20 AMBIGUOUS labels require adjudication. Do not train or report model performance until review is complete.
 
+## Action counts by split
+
+| Split | SAFE | MALICIOUS | AMBIGUOUS | Total |
+|---|---:|---:|---:|---:|
+| Train | 366 | 324 | 10 | 700 |
+| Validation | 94 | 66 | 0 | 160 |
+| Test | 64 | 66 | 10 | 140 |
+
+These are draft label counts; no SAFE or MALICIOUS label has independent review.
+
 ## Generation and provenance
 
 The data is synthetic and generated from 50 authored scenario families with ten session variations per family. Scenarios cover benign tasks, direct and multi-turn jailbreaks, instruction hierarchy manipulation, prompt extraction, role-play, indirect document, web, and tool-output injection, unauthorized access and tool use, exfiltration, privilege escalation, and ambiguous scope. Tool actions are simulated, addresses use example.test, and no real private data or external side effects are included.
